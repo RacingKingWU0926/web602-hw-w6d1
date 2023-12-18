@@ -58,5 +58,11 @@ app.post('/login', (req, res, next) => {
 })
 
 app.get('/login', (req, res) => {
-  res.send('in login page');
-})
+  res.sendFile('html/login.html',{root:__dirname})
+});
+
+app.get('/', connectEnsureLogin.ensureLoggedIn(), (req,res) => res.sendFile('html/index.html',{root:__dirname}));
+
+app.get('/private', connectEnsureLogin.ensureLoggedIn(),(req, res) => res.sendFile('html/private.html', {root:__dirname}));
+app.get('/user', connectEnsureLogin.ensureLoggedIn(),(req, res) => res.send ({user: req.user}));
+app.get('/logout', (req, res)=> {req.logOut(),res.sendFile('html/logout.html',{root:__dirname})});
