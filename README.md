@@ -24,4 +24,6 @@ Run `npm install passport` to install `passport`.
 
 Run `npm install connect-ensure-login`.
 
+Run `npm install mongoose`
 
+Run `npm install passport-local-mongoose`

@@ -25,18 +25,36 @@ const passport = require('passport');
 app.use(passport.initialize());
 app.use(passport.session());
 
-/* Passport local authentication */
-// passport.use(UserDetails.createStrategy());
+/* MongoDB Setup */
+const mongoose = require('mongoose');
+const passportLocalMongoose = require("passport-local-mongoose");
+//connect to the database using mongoose.connect and give it the path to our database.
+mongoose.connect('mongodb://localhost/MyDatabase'),
+{ useNewUrlParser: true, useUnifiedTopology: true};
+//define data structure using Schema. a Schema named UserDetail was created with username and password fields.
+const Schema = mongoose.Schema;
+const UserDetail = new Schema ({
+  username: String,
+  password: String,
+});
+//add passportLocalMongoose as a plugin to our Schema.
+UserDetail.plugin(passportLocalMongoose);
+//create a model from UserDetail schema
+const UserDetails = mongoose.model('userInfo', UserDetail, 'userInfo')
 
-// passport.serializeUser(UserDetails.serializeUser());
-// passport.deserializeUser(UserDetails.deserializeUser());
+
+/* Passport local authentication */
+passport.use(UserDetails.createStrategy());
+
+passport.serializeUser(UserDetails.serializeUser());
+passport.deserializeUser(UserDetails.deserializeUser());
 
 /* Define the endpoints */
-app.get('/', (req, res) => {
-  res.send('Welcome to my Express App!');
-});
-
 const connectEnsureLogin = require('connect-ensure-login');
+
+app.get('/', connectEnsureLogin.ensureLoggedIn(), (req, res) => {
+  res.sendFile('html/index.html',{root:__dirname})
+});
 
 app.post('/login', (req, res, next) => {
   passport.authenticate('local', (err, user, info) => {
@@ -61,8 +79,14 @@ app.get('/login', (req, res) => {
   res.sendFile('html/login.html',{root:__dirname})
 });
 
-app.get('/', connectEnsureLogin.ensureLoggedIn(), (req,res) => res.sendFile('html/index.html',{root:__dirname}));
+app.get('/private', connectEnsureLogin.ensureLoggedIn(), (req, res) => {
+  res.sendFile('html/private.html', {root:__dirname})
+});
 
-app.get('/private', connectEnsureLogin.ensureLoggedIn(),(req, res) => res.sendFile('html/private.html', {root:__dirname}));
-app.get('/user', connectEnsureLogin.ensureLoggedIn(),(req, res) => res.send ({user: req.user}));
-app.get('/logout', (req, res)=> {req.logOut(),res.sendFile('html/logout.html',{root:__dirname})});
+app.get('/user', connectEnsureLogin.ensureLoggedIn(),(req, res) => {
+  res.send ({user: req.user})
+});
+
+app.get('/logout', (req, res) => {
+  req.logOut(), res.sendFile('html/logout.html',{root:__dirname})
+});
